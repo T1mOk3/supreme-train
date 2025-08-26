@@ -56,7 +56,7 @@ class SharedViewModel: ViewModel() {
 
     fun initWifiNavigation(context: Context) {
         val wifiDbHelper = WifiNaviDatabaseHelper(context.applicationContext)
-        wifiDbHelper.databaseCreate()
+        wifiDbHelper.copyDatabaseFromAssets()
         wifiNaviManager = WifiNaviManager(context, wifiDbHelper)
     }
 
@@ -141,5 +141,6 @@ class SharedViewModel: ViewModel() {
         _databaseHelper?.close()
         super.onCleared()
     }
+
 
 }
