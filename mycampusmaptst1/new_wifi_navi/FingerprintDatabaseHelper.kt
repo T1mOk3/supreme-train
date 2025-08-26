@@ -68,7 +68,7 @@ class FingerprintDatabaseHelper(
                 SQLiteDatabase.CONFLICT_REPLACE
             )
             db.close()
-            result != 1L // true if insert was successful
+            result != -1L // true if insert was successful
         } catch (e: Exception) {
             Log.e("FingerprintDB", "Error inserting fingerprint", e)
             false
@@ -117,5 +117,6 @@ class FingerprintDatabaseHelper(
         Log.d("FingerprintDB", "Loaded ${fingerprints.size} fingerprints from database")
         return fingerprints
     }
+
 
 }
