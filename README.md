@@ -1,4 +1,4 @@
-# supreme-train
-This repository is for practicing the GitHub Flow
+# Android application for SMBU-BIT campus navigation via Wi-Fi
+This repository is for importing files and avoiding mistakes, when changing files
 
-I want to get used to GitHub in order to become better at what i am doing
+Here I`ll place main files of my project, except databases and some drawables
