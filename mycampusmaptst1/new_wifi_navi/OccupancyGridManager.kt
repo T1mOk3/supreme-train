@@ -84,54 +84,54 @@ class OccupancyGridManager(context: Context) {
         return cells.distinctBy { "${it.easting}_${it.northing}" } // Remove duplicates
     }
 
-    private fun createGridCellsOld(fingerprints: List<EachWifiFingerprint>): List<GridCell> {
-        val cells = mutableListOf<GridCell>()
-        val resolution = 2.0
-        if (fingerprints.isEmpty()) return cells
+    // private fun createGridCellsOld(fingerprints: List<EachWifiFingerprint>): List<GridCell> {
+    //     val cells = mutableListOf<GridCell>()
+    //     val resolution = 2.0
+    //     if (fingerprints.isEmpty()) return cells
 
-        // Find the bounding area of all fingerprints
-        val minLat = fingerprints.minOf { it.latitude }
-        val maxLat = fingerprints.maxOf { it.latitude }
-        val minLon = fingerprints.minOf { it.longitude }
-        val maxLon = fingerprints.maxOf { it.longitude }
+    //     // Find the bounding area of all fingerprints
+    //     val minLat = fingerprints.minOf { it.latitude }
+    //     val maxLat = fingerprints.maxOf { it.latitude }
+    //     val minLon = fingerprints.minOf { it.longitude }
+    //     val maxLon = fingerprints.maxOf { it.longitude }
 
-        // Convert to approximate metric coordinates
-        val minEasting = minLon * 111320.0
-        val maxEasting = maxLon * 111320.0
-        val minNorthing = minLat * 111111.0
-        val maxNorthing = maxLat * 111111.0
+    //     // Convert to approximate metric coordinates
+    //     val minEasting = minLon * 111320.0
+    //     val maxEasting = maxLon * 111320.0
+    //     val minNorthing = minLat * 111111.0
+    //     val maxNorthing = maxLat * 111111.0
 
-        // Calculate grid dimensions based on resolution
-        val eastingSpan = maxEasting - minEasting
-        val northingSpan = maxNorthing - minNorthing
+    //     // Calculate grid dimensions based on resolution
+    //     val eastingSpan = maxEasting - minEasting
+    //     val northingSpan = maxNorthing - minNorthing
 
-        val cellsEast = ceil(eastingSpan / resolution).toInt()
-        val cellsNorth = ceil(northingSpan / resolution).toInt()
+    //     val cellsEast = ceil(eastingSpan / resolution).toInt()
+    //     val cellsNorth = ceil(northingSpan / resolution).toInt()
 
-        Log.d(
-            "OccupancyGrid",
-            "Creating grid: ${cellsEast}x$cellsNorth cells ($resolution m resolution)"
-        )
+    //     Log.d(
+    //         "OccupancyGrid",
+    //         "Creating grid: ${cellsEast}x$cellsNorth cells ($resolution m resolution)"
+    //     )
 
-        // Create the grid cells
-        for (i in 0 until cellsEast) {
-            for (j in 0 until cellsNorth) {
-                val easting = minEasting + (i * resolution)
-                val northing = minNorthing + (j * resolution)
+    //     // Create the grid cells
+    //     for (i in 0 until cellsEast) {
+    //         for (j in 0 until cellsNorth) {
+    //             val easting = minEasting + (i * resolution)
+    //             val northing = minNorthing + (j * resolution)
 
-                cells.add(
-                    GridCell(
-                        cellId = "cell_${i}_${j}",
-                        easting = easting,
-                        northing = northing,
-                        probability = 0.0
-                    )
-                )
-            }
-        }
+    //             cells.add(
+    //                 GridCell(
+    //                     cellId = "cell_${i}_${j}",
+    //                     easting = easting,
+    //                     northing = northing,
+    //                     probability = 0.0
+    //                 )
+    //             )
+    //         }
+    //     }
 
-        return cells
-    }
+    //     return cells
+    // }
 
     fun resetProbabilities() {
         val totalCells = gridCells.size
@@ -252,4 +252,5 @@ class OccupancyGridManager(context: Context) {
         val lonDiff = point1.longitude - point2.longitude
         return sqrt(latDiff * latDiff + lonDiff * lonDiff)
     }
+
 }
