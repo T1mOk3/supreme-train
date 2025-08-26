@@ -108,7 +108,7 @@ class LocationAdapter (
     override fun getItemCount(): Int = locations.size
 
     fun updateData(newLocations: List<EachLocation>) {
-        locations = newLocations ?: emptyList()
+        locations = newLocations
         notifyDataSetChanged()
     }
 
@@ -116,3 +116,4 @@ class LocationAdapter (
         onGoButtonClickListener = listener
     }
 }
+
