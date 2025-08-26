@@ -30,26 +30,8 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DB_NAME, null
         return dbFile.exists()
     }
 
-    private fun copyDatabaseFromAssets() {
-        val dbDir = File(dbPath.substring(0, dbPath.lastIndexOf("/")))
-        if (!dbDir.exists()) {
-            dbDir.mkdirs()
-        }
 
-        myContext.assets.open(DB_NAME).use { inputStream ->
-            FileOutputStream(dbPath).use { outputStream ->
-                val buffer = ByteArray(1024)
-                var length: Int
-                while (inputStream.read(buffer).also { length = it } > 0) {
-                    outputStream.write(buffer, 0, length)
-                }
-                outputStream.flush()
-            }
-        }
-    }
-
-
-    fun databaseCreate() {
+    fun copyDatabaseFromAssets() {
         val file = File(dbPath)
         if (!file.exists()) {
             file.parentFile?.mkdirs()
@@ -87,5 +69,6 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DB_NAME, null
 
     override fun onCreate(db: SQLiteDatabase?) {}
     override fun onUpgrade(db: SQLiteDatabase?, oldVersion: Int, newVersion: Int) {}
+
 
 }
