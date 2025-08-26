@@ -53,9 +53,10 @@ data class EachWifiFingerprint(
                      }
                  }
              } catch (e: Exception) {
-                 Log.e("Prase:", "Did not prase Ap form Json", e)
+                 Log.e("Parse:", "Did not parse Ap form Json", e)
              }
              return apMap
          }
      }
+
 }
