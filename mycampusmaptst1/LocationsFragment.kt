@@ -54,11 +54,6 @@ class LocationsFragment : Fragment(R.layout.locations_fragment){
             setOnGoButtonClickListener { selectedLocation ->
 //              share location
                 sharedViewModel.setSelectedLocations(selectedLocation)
-//              switch to MapFragment
-                parentFragmentManager.beginTransaction()
-                    .replace(R.id.fragmentContainer1, MapFragment())
-                    .addToBackStack(null)
-                    .commit()
 //               notify activity to switch to map view
                 (requireActivity() as MainActivity).navigateToMapFragment()
             }
@@ -109,4 +104,5 @@ class LocationsFragment : Fragment(R.layout.locations_fragment){
         _binding = null
         super.onDestroyView()
     }
+
 }
