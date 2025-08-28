@@ -500,7 +500,6 @@ class MapFragment : Fragment(R.layout.map_fragment) {
             Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
             lastToastTime = currentTime
         }
-        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
     }
 
     override fun onResume() {
@@ -609,6 +608,7 @@ class MapFragment : Fragment(R.layout.map_fragment) {
         val cosLat = cos(Math.toRadians(latitude))
         return meters / (METERS_PER_DEGREE_LAT * cosLat)
     }
+
 
 
 }
