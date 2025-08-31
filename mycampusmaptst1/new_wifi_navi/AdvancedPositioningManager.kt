@@ -14,14 +14,8 @@ class AdvancedPositioningManager(context: Context) {
     private val wifiManager = context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
 
     // OFFLINE SURVEY phase
-    // CHANGE 1: Make fingerprint collection 'suspend' and run in background using coroutines.
-    // This avoids blocking the UI thread (replaces Thread.sleep with delay in coroutine context).
-    suspend fun collectFingerprint(pointId: String, buildingId: Int, location: GeoPoint) : Boolean {
-          try {
-            // CHANGE 2: Attempt to trigger a fresh scan for more up-to-date results.
-            wifiManager.startScan()
-            delay(1500) // Wait for scan to complete (in production, use broadcast receiver for robust scan result handling)
-            
+    fun collectFingerprint(pointId: String, buildingId: Int, location: GeoPoint) : Boolean {
+        return try {
             val scanResults = getLatestScanResults()
             if (scanResults.isEmpty()) {
                 Log.d("AdvPositioning", "No Wi-Fi networks found for fingerprint.")
@@ -30,8 +24,6 @@ class AdvancedPositioningManager(context: Context) {
 
             val apMap = mutableMapOf<String, MutableList<Int>>()
             repeat(3) { // Take 3 measurements as paper suggests
-                wifiManager.startScan() // CHANGE 3: Start scan for each measurement
-                delay(1500) // Wait for scan to complete
                 val currentScan = getLatestScanResults()
                 currentScan.forEach { result ->
                     if (result.level > -85) {
@@ -53,29 +45,31 @@ class AdvancedPositioningManager(context: Context) {
                 accessPoints = averagedApMap
             )
             val success = fingerprintDatabaseHelper.insertFingerprint(fingerprint)
-            // CHANGE 4: Grid reinitialization kept as is, but be aware of performance if collecting many fingerprints rapidly.
+
+            // Reinitialize grid when new fingerprints are added
             if (success) {
                 occupancyGridManager.initializeGridFromFingerprints()
             }
-            return@withContext success
+
+            success
         } catch (e: Exception) {
             Log.e("AdvPositioning", "Error collecting fingerprint", e)
-            return@withContext false
+            false
         }
     }
 
-
     // ONLINE POSITIONING phase
     fun estimatePositionProbabilistic(): OccupancyGridManager.PositioningResult? {
-        val liveScanResults = getLatestScanResults()
-        val filteredResults = filterScanResults(liveScanResults)
+//        val liveScanResults = getLatestScanResults()
+//        val filteredResults = filterScanResults(liveScanResults)
+        val liveScanMap = getAveragedFilteredScanResults()
 
-        if (filteredResults.isEmpty()) {
+        if (liveScanMap.isEmpty()) {
             Log.w("AdvPositioning", "No reliable live scan results for estimation.")
             return null
         }
 
-        val liveScanMap = filteredResults.associate { it.BSSID to it.level }
+//        val liveScanMap = filteredResults.associate { it.BSSID to it.level }
 
         // Initialize grid if not already done
         if (!occupancyGridManager.initializeGridFromFingerprints()) {
@@ -135,8 +129,21 @@ class AdvancedPositioningManager(context: Context) {
         }
     }
 
+    fun getAveragedFilteredScanResults(scanCount: Int = 3, delay: Long = 500): Map<String, Int> {
+        val apMap = mutableMapOf<String, MutableList<Int>>()
+        repeat(scanCount) {
+            val scanResults = getLatestScanResults()
+            scanResults.forEach { result ->
+                if (result.level > -85 && result.BSSID != null && !result.SSID.isNullOrEmpty()) {
+                    apMap.getOrPut(result.BSSID) { mutableListOf() }.add(result.level)
+                }
+            }
+            Thread.sleep(delay)
+        }
+        return apMap.mapValues { (_, values) -> values.average().toInt() }
+    }
+
     private fun getLatestScanResults(): List<ScanResult> {
-        // CHANGE 5: This will still return cached results; for freshest results, caller should trigger startScan and wait.
         return try {
             wifiManager.scanResults ?: emptyList()
         } catch (e: SecurityException) {
@@ -144,6 +151,5 @@ class AdvancedPositioningManager(context: Context) {
             emptyList()
         }
     }
-
 
 }
