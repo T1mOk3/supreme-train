@@ -35,6 +35,8 @@ import io.github.mycampusmaptst1.overlays.SharedViewModel
 import io.github.mycampusmaptst1.utils.Bounds
 import io.github.mycampusmaptst1.utils.PermissionHelper
 import org.osmdroid.config.Configuration
+import org.osmdroid.tileprovider.modules.DatabaseFileArchive
+import org.osmdroid.tileprovider.modules.ZipFileArchive
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.BoundingBox
 import org.osmdroid.util.GeoPoint
@@ -55,7 +57,6 @@ class MapFragment : Fragment(R.layout.map_fragment) {
     companion object {
         private const val TOAST_COOLDOWN = 2000
         private val CAMPUS_CENTER = GeoPoint(22.681323996194592, 114.20004844665527)
-        // private val CAMPUS_CENTER = GeoPoint(22.683085, 114.200014)
         private const val MAX_ZOOM_LVL = 20.0
         private const val MIN_ZOOM_LVL = 14.0
         private val WIFI_PERMISSIONS = arrayOf(
@@ -66,6 +67,10 @@ class MapFragment : Fragment(R.layout.map_fragment) {
         )
 
     }
+    // offline map
+    private var mbtilesArchive: DatabaseFileArchive? = null
+
+
     //  map components
     private lateinit var mapView: MapView
     // gps nav
@@ -106,6 +111,10 @@ class MapFragment : Fragment(R.layout.map_fragment) {
     private val gridMarkers = mutableListOf<Overlay>()
     private val buildingOutlines = mutableListOf<Overlay>()
 
+
+    // offline map
+    private var zipArchive: ZipFileArchive? = null
+
     private val bounds :Bounds ?= null
 
     //  initialize map and osmdroid
@@ -131,14 +140,46 @@ class MapFragment : Fragment(R.layout.map_fragment) {
     @RequiresApi(Build.VERSION_CODES.R)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-//        sharedViewModel.initWifiNavigation(requireContext())
         setupMapComponents(view)
         setupObservers()
         setupFabListeners(view)
         setupWifiNavigation()
+
+        checkAndDrawRouteFromDestination()
     }
+
+
+    private fun checkAndDrawRouteFromDestination() {
+        sharedViewModel.selectedLocation.value?.let { location ->
+            Handler(Looper.getMainLooper()).postDelayed({
+                drawRouteToDestination(GeoPoint(location.latitude, location.longitude))
+            }, 300)
+        }
+    }
+
+    private fun drawRouteToDestination(destination: GeoPoint) {
+        // Get the current user position
+        val startPoint = userMarker?.position ?: sharedViewModel.userPos.value
+        ?: sharedViewModel.wifiPosition.value ?: CAMPUS_CENTER
+
+        // Draw the route
+        val route = listOf(startPoint, destination)
+        routeOverlay.drawRoute(route)
+
+        // Set as selected destination
+        selectedDestination = destination
+        destinationMarker.updatePosition(destination)
+
+        // Adjust view to show the entire route
+        val boundingBox = BoundingBox.fromGeoPoints(route)
+        mapView.controller.apply {
+            zoomToSpan(boundingBox.latitudeSpan, boundingBox.longitudeSpan)
+            setCenter(boundingBox.centerWithDateLine)
+        }
+    }
+
     // for new wifi navi approach
-    @RequiresApi(Build.VERSION_CODES.Q)
+//    @RequiresApi(Build.VERSION_CODES.Q)
     private fun updatePositionUsingActiveSystem() {
         val positioningResult = if (isAdvancedWifiActive) {
             advancedPositioningManager.estimatePositionProbabilistic()
@@ -150,8 +191,7 @@ class MapFragment : Fragment(R.layout.map_fragment) {
         }
 
         positioningResult?.let { result ->
-            updateUserMarker(result.position)
-//            sharedViewModel.updateUserMarkerPosition(result.position)
+//            updateUserMarker(result.position)
             sharedViewModel.updateWifiPositionWithConfidence(result.position, result.confidence)
 
             // Show confidence information
@@ -161,13 +201,6 @@ class MapFragment : Fragment(R.layout.map_fragment) {
             mapView.controller.animateTo(result.position)
         } ?: showToast("Could not determine position")
 
-
-//        estimatedPosition?.let { position ->
-//            updateUserMarker(position)
-////            sharedViewModel.updateWifiPosition()
-//            showToast("Position updated via ${if (isAdvancedWifiActive) "Advanced" else "Basic"} WiFi")
-////            mapView.controller.animateTo(position)
-//        } ?: showToast("Could not determine position")
     }
 
     private fun handleWifiPermissionResult(permissions: Map<String, Boolean>) {
@@ -229,71 +262,81 @@ class MapFragment : Fragment(R.layout.map_fragment) {
             Log.d("MapFragment", "Locations received: ${locations.size}")
             addLocationMarker(locations)
         }
+
         sharedViewModel.userPos.observe(viewLifecycleOwner) { position ->
             position?.let {
                 updateUserMarker(it)
+                // Redraw route if we have a destination
+                selectedDestination?.let { dest ->
+                    drawRouteToDestination(dest)
+                }
             }
         }
         // Add WiFi position observer
         sharedViewModel.wifiPosition.observe(viewLifecycleOwner) { position ->
             position?.let {
                 updateUserMarker(it)
-                if (selectedDestination != null) {
-                    val route = listOf(it, selectedDestination!!)
-                    routeOverlay.drawRoute(route)
+                selectedDestination?.let { dest ->
+                    drawRouteToDestination(dest)
                 }
             }
         }
     }
     @RequiresApi(Build.VERSION_CODES.R  )
     private fun setupFabListeners(view: View) {
-//      to draw route
+        // to draw route
         view.findViewById<FloatingActionButton>(R.id.fabDrawRoute).setOnClickListener {
             selectedDestination?.let { dest ->
-
-                val startPoint = sharedViewModel.wifiPosition.value
-                    ?: sharedViewModel.userPos.value
-                    ?: CAMPUS_CENTER
-
+                // Get the current user position from the marker, not from ViewModel
+                val startPoint = userMarker?.position ?: run {
+                    // Fallback to ViewModel if marker doesn't exist
+                    sharedViewModel.wifiPosition.value ?: sharedViewModel.userPos.value ?: CAMPUS_CENTER
+                }
                 val route = listOf(startPoint, dest)
                 routeOverlay.drawRoute(route)
-//              adjust view
-                val boundingBox = BoundingBox.fromGeoPoints(listOf(startPoint, dest) )
-                mapView.controller.apply {
-                    zoomToSpan(boundingBox.latitudeSpan, boundingBox.longitudeSpan)
-                    setCenter(boundingBox.centerWithDateLine)
-                }
             } ?: run { showToast("Please select a destination first") }
 
         }
-//      to clear route
+        // to clear route
         view.findViewById<FloatingActionButton>(R.id.fabClear).setOnClickListener {
             destinationMarker.removeMarker()
             selectedDestination = null
             routeOverlay.clear()
         }
         // new wifi navi
-        view.findViewById<FloatingActionButton>(R.id.fabSwitchWifiMode).setOnClickListener {
+//        view.findViewById<FloatingActionButton>(R.id.fabSwitchWifiMode).setOnClickListener {
+        view.findViewById<FloatingActionButton>(R.id.fabStartWifiNav).setOnClickListener {
             isAdvancedWifiActive = !isAdvancedWifiActive
             val mode = if (isAdvancedWifiActive) "Advanced" else "Basic"
             showToast("Switched to $mode WiFi positioning")
             // Immediately update position with the new mode
             updatePositionUsingActiveSystem()
         }
-        view.findViewById<FloatingActionButton>(R.id.fabCollectFingerprint).setOnClickListener {
-            collectAdvancedFingerprint()
+        // show use app info
+        view.findViewById<FloatingActionButton>(R.id.fabAppInfo).setOnClickListener {
+            val dialogView = layoutInflater.inflate(R.layout.dialog_instructions, null)
+
+            AlertDialog.Builder(context)
+                .setView(dialogView)
+                .setPositiveButton("Got it!\nLet's start") { dialog, which -> }
+                .setCancelable(true)
+                .show()
         }
+
+//        view.findViewById<FloatingActionButton>(R.id.fabCollectFingerprint).setOnClickListener {
+//            collectAdvancedFingerprint()
+//        }
         // old wifi navi
-        view.findViewById<FloatingActionButton>(R.id.fabStartWifiNav).setOnClickListener {
-            if (wifiUpdateHandler.hasCallbacks(wifiUpdateRunnable)) {
-                showToast("WiFi navigation already running")
-            } else {
-                checkWifiPermissionsAndProceed()
-            }
-        }
-        view.findViewById<FloatingActionButton>(R.id.fabStopWifiNav).setOnClickListener {
-            stopWifiNavigation()
-        }
+//        view.findViewById<FloatingActionButton>(R.id.fabStartWifiNav).setOnClickListener {
+//            if (wifiUpdateHandler.hasCallbacks(wifiUpdateRunnable)) {
+//                showToast("WiFi navigation already running")
+//            } else {
+//                checkWifiPermissionsAndProceed()
+//            }
+//        }
+//        view.findViewById<FloatingActionButton>(R.id.fabStopWifiNav).setOnClickListener {
+//            stopWifiNavigation()
+//        }
     }
 
     private fun collectAdvancedFingerprint() {
@@ -318,8 +361,8 @@ class MapFragment : Fragment(R.layout.map_fragment) {
         val zoomLevel = 18.0
         val animationDuration = 1500L
 
-        mapView.apply {
-            setTileSource(TileSourceFactory.OpenTopo)
+        mapView.apply { // OpenTopo
+            setTileSource(TileSourceFactory.MAPNIK)
             overlays.clear()
             minZoomLevel = MIN_ZOOM_LVL
             maxZoomLevel = MAX_ZOOM_LVL
@@ -334,7 +377,7 @@ class MapFragment : Fragment(R.layout.map_fragment) {
             object : GpsMyLocationProvider(requireContext()) {
                 override fun startLocationProvider(myLocationConsumer: IMyLocationConsumer?): Boolean {
                     // Don't start GPS provider TODO: Need to set it to false
-                    return true
+                    return false
                 }
             },
             mapView
@@ -408,7 +451,7 @@ class MapFragment : Fragment(R.layout.map_fragment) {
             setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
         }
         mapView.overlays.add(userMarker)
-        mapView.controller.animateTo(position)
+//        mapView.controller.animateTo(position)
         mapView.invalidate()
     }
     private fun clearUserMarker() {
@@ -500,15 +543,26 @@ class MapFragment : Fragment(R.layout.map_fragment) {
             Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
             lastToastTime = currentTime
         }
+        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
     }
 
     override fun onResume() {
         super.onResume()
         mapView.onResume()
         myLocationOverlay.enableMyLocation()
+        sharedViewModel.mapState.value?.let { state ->
+            mapView.controller.setCenter(state.center)
+            mapView.controller.setZoom(state.zoomLevel)
+            state.userPosition?.let { updateUserMarker(it) }
+        }
     }
     override fun onPause() {
         super.onPause()
+        sharedViewModel.saveMapState(
+            mapView.mapCenter,
+            mapView.zoomLevelDouble,
+            userMarker?.position
+        )
 //      save pos
         myLocationOverlay.myLocation?.let {
             sharedViewModel.updateUserMarkerPosition(it)
@@ -608,7 +662,6 @@ class MapFragment : Fragment(R.layout.map_fragment) {
         val cosLat = cos(Math.toRadians(latitude))
         return meters / (METERS_PER_DEGREE_LAT * cosLat)
     }
-
 
 
 }
