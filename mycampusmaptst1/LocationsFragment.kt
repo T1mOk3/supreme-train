@@ -1,17 +1,18 @@
 package io.github.mycampusmaptst1
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import io.github.mycampusmaptst1.databinding.LocationsFragmentBinding
 import io.github.mycampusmaptst1.overlays.SharedViewModel
+import org.osmdroid.util.GeoPoint
 
 class LocationsFragment : Fragment(R.layout.locations_fragment){
     private var _binding: LocationsFragmentBinding? = null
@@ -52,9 +53,13 @@ class LocationsFragment : Fragment(R.layout.locations_fragment){
                 selectedLocation = location
             }
             setOnGoButtonClickListener { selectedLocation ->
-//              share location
-                sharedViewModel.setSelectedLocations(selectedLocation)
-//               notify activity to switch to map view
+                val destination = GeoPoint(selectedLocation.latitude, selectedLocation.longitude)
+                // share location
+                Log.d("RecView", "Destination: ${GeoPoint(selectedLocation.latitude, selectedLocation.longitude)}!")
+                sharedViewModel.setSelectedLocation(selectedLocation)
+                // Clear any search query
+                binding.searchView.setQuery("", false)
+                // switch to MapFragment
                 (requireActivity() as MainActivity).navigateToMapFragment()
             }
         }
@@ -104,5 +109,4 @@ class LocationsFragment : Fragment(R.layout.locations_fragment){
         _binding = null
         super.onDestroyView()
     }
-
 }

@@ -15,7 +15,7 @@ import kotlin.math.abs
 class WifiNaviDatabaseHelper (context: Context) : SQLiteOpenHelper(context, DB_NAME, null , DB_VERSION) {
 
     companion object {
-        private const val DB_NAME = "MyDatabase15.db"
+        private const val DB_NAME = "MyDatabase18.db"
         private const val DB_VERSION = 1
         const val TABLE_NAME = "allWifiFingerprintsTable"
         const val COLUMN_BUILDING_ID = "building_id"

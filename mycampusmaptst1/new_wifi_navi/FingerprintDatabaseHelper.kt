@@ -15,7 +15,7 @@ class FingerprintDatabaseHelper(
     DB_VERSION)
 {
     companion object {
-        private const val  DB_NAME = "MyDatabase15.db"
+        private const val  DB_NAME = "MyDatabase18.db"
         private const val DB_VERSION = 1
 
         const val TABLE_FINGERPRINTS = "fingerprints"
@@ -68,7 +68,7 @@ class FingerprintDatabaseHelper(
                 SQLiteDatabase.CONFLICT_REPLACE
             )
             db.close()
-            result != -1L // true if insert was successful
+            result != 1L // true if insert was successful
         } catch (e: Exception) {
             Log.e("FingerprintDB", "Error inserting fingerprint", e)
             false
@@ -117,6 +117,5 @@ class FingerprintDatabaseHelper(
         Log.d("FingerprintDB", "Loaded ${fingerprints.size} fingerprints from database")
         return fingerprints
     }
-
 
 }
