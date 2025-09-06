@@ -1,9 +1,11 @@
 package io.github.mycampusmaptst1
 
+import android.app.AlertDialog
 import android.content.Context
 import android.os.Build
 import android.os.Bundle
-import android.util.AttributeSet
+import android.os.Handler
+import android.os.Looper
 import android.view.View
 import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
@@ -11,7 +13,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import io.github.mycampusmaptst1.databinding.ActivityMainBinding
 import io.github.mycampusmaptst1.overlays.SharedViewModel
-import io.github.mycampusmaptst1.utils.PermissionHelper
 import org.osmdroid.config.Configuration
 
 class MainActivity : AppCompatActivity() {
@@ -32,7 +33,7 @@ class MainActivity : AppCompatActivity() {
         replaceFragment(MapFragment())
 //      load db
         sharedViewModel.initDatabaseHelper(applicationContext)
-//       navigation logic
+//      navigation logic
         binding.bottomNavigationView.setOnItemSelectedListener {
             when(it.itemId){
                 R.id.map -> {
@@ -56,6 +57,16 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+
+        if (!wereInstructionsSeen()) {
+            Handler(Looper.getMainLooper()).postDelayed({
+                showCustomInstructions()
+            }, 1000)
+        }
+
+        // show info btn
+
+
     }
     private fun replaceFragment(fragment: Fragment) {
         val fragmentTag = fragment.javaClass.simpleName // Use unique tag
@@ -79,6 +90,26 @@ class MainActivity : AppCompatActivity() {
     fun navigateToMapFragment() {
         binding.bottomNavigationView.selectedItemId = R.id.map
         replaceFragment(MapFragment())
+    }
+
+    fun showInstructions()
+    {
+
+    }
+
+    private fun showCustomInstructions() {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_instructions, null)
+
+        AlertDialog.Builder(this)
+            .setView(dialogView)
+            .setPositiveButton("Got it!\nLet's start") { dialog, which -> }
+            .setCancelable(true)
+            .show()
+    }
+
+    private fun wereInstructionsSeen(): Boolean {
+        val sharedPref = getSharedPreferences("app_prefs", MODE_PRIVATE)
+        return sharedPref.getBoolean("instructions_seen", false)
     }
 
 }

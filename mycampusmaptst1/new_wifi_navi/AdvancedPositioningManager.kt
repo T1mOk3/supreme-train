@@ -4,7 +4,6 @@ import android.content.Context
 import android.net.wifi.ScanResult
 import android.net.wifi.WifiManager
 import android.util.Log
-import kotlinx.coroutines.delay
 import org.osmdroid.util.GeoPoint
 
 
@@ -17,9 +16,9 @@ class AdvancedPositioningManager(context: Context) {
     // OFFLINE SURVEY phase
     fun collectFingerprint(pointId: String, buildingId: Int, location: GeoPoint) : Boolean {
         return try {
-            
+
             val apMap = mutableMapOf<String, MutableList<Int>>()
-            repeat(3) { // Take 3 measurements as paper suggests
+            repeat(3) { // Take 3 measurements
                 val currentScan = getLatestScanResults()
                 currentScan.forEach { result ->
                     if (result.level > -85) {
@@ -86,6 +85,7 @@ class AdvancedPositioningManager(context: Context) {
 
 //        val liveScanMap = filteredResults.associate { it.BSSID to it.level }
         val allFingerprints = fingerprintDatabaseHelper.getAllFingerprints()
+        Log.d("AdvPositioning", "Fingerprints in DB: ${allFingerprints.size}")
 
         if (allFingerprints.isEmpty()) {
             Log.d("AdvPositioning", "No fingerprints in database for estimation.")

@@ -1,5 +1,6 @@
 package io.github.mycampusmaptst1.overlays
 
+import org.osmdroid.util.BoundingBox
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Polyline
@@ -13,6 +14,12 @@ class RouteOverlay(private val mapView: MapView) {
             setPoints(points)
             color = 0xFF4285F4.toInt() // #4285F4
             width = 8f
+        }
+        // adjust view
+        val boundingBox = BoundingBox.fromGeoPoints(points)
+        mapView.controller.apply {
+            zoomToSpan(boundingBox.latitudeSpan, boundingBox.longitudeSpan)
+            setCenter(boundingBox.centerWithDateLine)
         }
         // adding new route
         mapView.overlays.add(polyline)

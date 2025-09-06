@@ -11,13 +11,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.mycampusmaptst1.DatabaseHelper
 import io.github.mycampusmaptst1.EachLocation
-import io.github.mycampusmaptst1.utils.PermissionHelper
 import io.github.mycampusmaptst1.wifi_navigation.WifiNaviDatabaseHelper
 import io.github.mycampusmaptst1.wifi_navigation.WifiNaviManager
 //import io.github.mycampusmaptst1.wifi_navigation.WifiNaviDatabaseHelper
 //import io.github.mycampusmaptst1.wifi_navigation.WifiNaviManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.osmdroid.api.IGeoPoint
 import org.osmdroid.util.GeoPoint
 
 class SharedViewModel: ViewModel() {
@@ -31,6 +31,7 @@ class SharedViewModel: ViewModel() {
     private val _selectedLocation = MutableLiveData<EachLocation>()
     val selectedLocation: LiveData<EachLocation> = _selectedLocation
 
+
     private var _databaseHelper: DatabaseHelper? = null
 
     private val _isLoading = MutableLiveData<Boolean>()
@@ -43,7 +44,6 @@ class SharedViewModel: ViewModel() {
     private val _wifiPosition = MutableLiveData<GeoPoint?>()
     val wifiPosition: LiveData<GeoPoint?> = _wifiPosition
 
-    // In SharedViewModel.kt
     private val _wifiPositionWithConfidence = MutableLiveData<Pair<GeoPoint, Double>?>()
     val wifiPositionWithConfidence: LiveData<Pair<GeoPoint, Double>?> = _wifiPositionWithConfidence
 
@@ -51,12 +51,26 @@ class SharedViewModel: ViewModel() {
         _wifiPositionWithConfidence.value = Pair(position, confidence)
     }
 
+    private val _mapState = MutableLiveData<MapState>()
+    val mapState: LiveData<MapState> get() = _mapState
+
+    data class MapState(
+        val center: GeoPoint,
+        val zoomLevel: Double,
+        val userPosition: GeoPoint?
+    )
+
+    fun saveMapState(center: IGeoPoint, zoomLevel: Double, userPosition: GeoPoint?) {
+        val geoCenter = GeoPoint(center.latitude, center.longitude)
+        _mapState.value = MapState(geoCenter, zoomLevel, userPosition)
+    }
+
 
     private lateinit var wifiNaviManager: WifiNaviManager
 
     fun initWifiNavigation(context: Context) {
         val wifiDbHelper = WifiNaviDatabaseHelper(context.applicationContext)
-        wifiDbHelper.copyDatabaseFromAssets()
+        wifiDbHelper.databaseCreate()
         wifiNaviManager = WifiNaviManager(context, wifiDbHelper)
     }
 
@@ -78,7 +92,7 @@ class SharedViewModel: ViewModel() {
     fun initDatabaseHelper(context: Context) {
         if (_databaseHelper == null) {
             _databaseHelper = DatabaseHelper(context.applicationContext)
-            _databaseHelper?.databaseCreate()
+            _databaseHelper?.copyDatabaseFromAssets()
             fetchLocationsFromDB()
         }
     }
@@ -134,13 +148,13 @@ class SharedViewModel: ViewModel() {
     fun updateUserMarkerPosition(position: GeoPoint?) {
         _userPos.value = position
     }
-    fun setSelectedLocations(location: EachLocation) {
+    fun setSelectedLocation(location: EachLocation) {
         _selectedLocation.value = location
     }
+
     override fun onCleared() {
         _databaseHelper?.close()
         super.onCleared()
     }
-
 
 }

@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MapFragment">
+
+    <org.osmdroid.views.MapView
+        android:id="@+id/mapView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:ignore="MissingConstraints" />
+
+    <!-- ===== LEFT SIDE: WIFI Navigation Controls ===== -->
+<!--    <com.google.android.material.floatingactionbutton.FloatingActionButton-->
+<!--        android:id="@+id/fabStopWifiNav"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_margin="16dp"-->
+<!--        android:contentDescription="@string/stop_navigation"-->
+<!--        android:src="@drawable/ic_stop"-->
+<!--        android:tint="@android:color/black"-->
+<!--        app:backgroundTint="@color/green"-->
+<!--        app:fabSize="mini"-->
+<!--        app:layout_constraintBottom_toBottomOf="parent"-->
+<!--        app:layout_constraintStart_toStartOf="parent" />-->
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabAppInfo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:contentDescription="@string/app_info_txt"
+        android:src="@drawable/outline_show_info_marker"
+        android:tint="@android:color/white"
+        app:backgroundTint="@color/purple"
+        app:fabSize="mini"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabStartWifiNav"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:contentDescription="@string/start_navigation"
+        android:src="@drawable/ic_start_wifi_navi"
+        android:tint="@android:color/black"
+        app:backgroundTint="@color/green"
+        app:fabSize="mini"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/fabAppInfo" />
+
+    <!-- ===== RIGHT SIDE: Route Drawing Controls ===== -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabDrawRoute"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:contentDescription="@string/draw_route"
+        android:src="@drawable/outline_route"
+        app:backgroundTint="@color/blue"
+        app:fabSize="mini"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:tint="@android:color/white" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabClear"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
+        android:contentDescription="@string/delete_route"
+        android:src="@drawable/outline_delete_route"
+        android:tint="@android:color/white"
+        app:backgroundTint="@color/blue"
+        app:fabSize="mini"
+        app:layout_constraintBottom_toBottomOf="@id/fabDrawRoute"
+        app:layout_constraintEnd_toStartOf="@id/fabDrawRoute" />
+
+    <!-- NEW: Switch between Basic/Advanced WiFi mode -->
+<!--    <com.google.android.material.floatingactionbutton.FloatingActionButton-->
+<!--        android:id="@+id/fabSwitchWifiMode"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_margin="16dp"-->
+<!--        android:contentDescription="@string/switch_wifi_positioning_mode"-->
+<!--        android:src="@drawable/ic_switch_camera"-->
+<!--        android:tint="@android:color/white"-->
+<!--        app:backgroundTint="@color/purple"-->
+<!--        app:fabSize="mini"-->
+<!--        app:layout_constraintBottom_toTopOf="@+id/fabClear"-->
+<!--        app:layout_constraintEnd_toStartOf="@+id/fabCollectFingerprint" />-->
+
+<!--    &lt;!&ndash; NEW: Collect fingerprint for advanced system &ndash;&gt;-->
+<!--    <com.google.android.material.floatingactionbutton.FloatingActionButton-->
+<!--        android:id="@+id/fabCollectFingerprint"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_margin="16dp"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:contentDescription="@string/collect_wifi_fingerprint"-->
+<!--        android:src="@drawable/ic_add_location"-->
+<!--        android:tint="@android:color/white"-->
+<!--        app:backgroundTint="@color/purple"-->
+<!--        app:fabSize="mini"-->
+<!--        app:layout_constraintBottom_toTopOf="@+id/fabDrawRoute"-->
+<!--        app:layout_constraintEnd_toEndOf="parent" />-->
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

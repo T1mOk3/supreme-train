@@ -1,6 +1,7 @@
 package io.github.mycampusmaptst1
 
 import android.annotation.SuppressLint
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,26 +12,28 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.request.RequestOptions
+import io.github.mycampusmaptst1.new_wifi_navi.EachWifiFingerprint
+import io.github.mycampusmaptst1.utils.CampusItem
 
 class LocationAdapter (
     private var locations: List<EachLocation> = emptyList()
 ) : RecyclerView.Adapter<LocationAdapter.LocationViewHolder>() {
-//  when location is clicked
+
+    private var items: List<CampusItem> = emptyList()
+
+
+    //  when location is clicked
     private var itemClickListener: ((EachLocation) -> Unit)? = null
-//  when btn is clicked
+    //  when btn is clicked
     private var onGoButtonClickListener: ((EachLocation) -> Unit)? = null
-//
+    //
     private val glideOptions = RequestOptions()
         .placeholder(R.drawable.ic_placeholder)
         .error(R.drawable.ic_placeholder)
         .diskCacheStrategy(DiskCacheStrategy.ALL)
         .override(200, 200)
 
-//  receive clicked location
-    fun setOnItemClickListener(listener: (EachLocation) -> Unit) {
-        itemClickListener = listener
-    }
-//  references for each item
+    //  references for each item
     inner class LocationViewHolder (itemView: View) : RecyclerView.ViewHolder(itemView) {
         val nameTextView: TextView = itemView.findViewById(R.id.tvLocationName)
         val typeTextView: TextView = itemView.findViewById(R.id.tvLocationType)
@@ -53,19 +56,28 @@ class LocationAdapter (
 
             btnGo.setOnClickListener {
                 onGoButtonClickListener?.invoke(location)
+
             }
         }
 
         private fun loadImage(location: EachLocation) {
             when {
                 location.imagePath.isEmpty() -> {
-                    imageView.setImageResource(R.drawable.ic_placeholder)
+                    Glide.with(itemView.context)
+                        .load(R.drawable.ic_placeholder)
+                        .apply(glideOptions)
+                        .into(imageView)
+//                    imageView.setImageResource(R.drawable.ic_placeholder)
                 }
                 location.imagePath.startsWith("drawable/") -> {
                     loadResourceImage(location.imagePath)
                 }
                 else -> {
-                    imageView.setImageResource(R.drawable.ic_placeholder)
+//                    imageView.setImageResource(R.drawable.ic_placeholder)
+                    Glide.with(itemView.context)
+                        .load(R.drawable.ic_placeholder)
+                        .apply(glideOptions)
+                        .into(imageView)
                 }
             }
         }
@@ -80,15 +92,17 @@ class LocationAdapter (
                 "drawable",
                 itemView.context.packageName
             )
+            Log.d("ImageDebug", "Loading image: $resName, resId: $resId")
+            imageView.setImageResource(R.drawable.test_location)
             // set image
-            if (resId != 0) {
-                Glide.with(itemView.context)
-                    .load(resId)
-                    .apply(glideOptions)
-                    .into(imageView)
-            } else {
-                imageView.setImageResource(R.drawable.ic_placeholder)
-            }
+//            if (resId != 0) {
+//                Glide.with(itemView.context)
+//                    .load(resId)
+//                    .apply(glideOptions)
+//                    .into(imageView)
+//            } else {
+//                 imageView.setImageResource(R.drawable.ic_placeholder)
+//            }
         }
     }
 
@@ -103,10 +117,16 @@ class LocationAdapter (
          holder.bind(locations[position])
     }
 
+    override fun onViewRecycled(holder: LocationViewHolder) {
+        super.onViewRecycled(holder)
+        Glide.with(holder.itemView.context).clear(holder.imageView)
+    }
+
 
     //  total number of items in the set
     override fun getItemCount(): Int = locations.size
 
+    @SuppressLint("NotifyDataSetChanged")
     fun updateData(newLocations: List<EachLocation>) {
         locations = newLocations
         notifyDataSetChanged()
@@ -115,5 +135,9 @@ class LocationAdapter (
     fun setOnGoButtonClickListener(listener: (EachLocation) -> Unit) {
         onGoButtonClickListener = listener
     }
-}
+    //  receive clicked location
+    fun setOnItemClickListener(listener: (EachLocation) -> Unit) {
+        itemClickListener = listener
+    }
 
+}

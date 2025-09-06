@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:paddingStart="64dp"
+    android:background="?attr/selectableItemBackground">
+
+    <TextView
+        android:id="@+id/tvClassroomName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="16sp"
+        android:textStyle="bold"/>
+
+    <TextView
+        android:id="@+id/tvClassroomBuilding"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="12sp"
+        android:textColor="@android:color/darker_gray"
+        android:layout_marginTop="2dp"/>
+
+    <Button
+        android:id="@+id/btnGoClassroom"
+        android:layout_width="wrap_content"
+        android:layout_height="32dp"
+        android:text="@string/go"
+        android:textSize="12sp"
+        android:paddingHorizontal="16dp"
+        android:layout_marginTop="8dp"
+        android:backgroundTint="@color/green"
+        android:textColor="@android:color/white"/>
+
+</LinearLayout>
+
+
+
+
+    <!--<?xml version="1.0" encoding="utf-8"?>-->
+    <!--<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"-->
+    <!--    xmlns:tools="http://schemas.android.com/tools"-->
+    <!--    android:layout_width="match_parent"-->
+    <!--    android:layout_height="wrap_content"-->
+    <!--    android:orientation="horizontal"-->
+    <!--    android:padding="16dp"-->
+    <!--    android:paddingStart="48dp"-->
+    <!--    android:background="?attr/selectableItemBackground"-->
+    <!--    tools:ignore="RtlSymmetry">-->
+
+    <!--    <TextView-->
+    <!--        android:id="@+id/tvClassroomName"-->
+    <!--        android:layout_width="0dp"-->
+    <!--        android:layout_height="wrap_content"-->
+    <!--        android:layout_weight="1"-->
+    <!--        android:textSize="16sp"-->
+    <!--        android:textColor="@color/black"-->
+    <!--        android:paddingVertical="4dp" />-->
+
+    <!--    <Button-->
+    <!--        android:id="@+id/btnGoClassroom"-->
+    <!--        android:layout_width="wrap_content"-->
+    <!--        android:layout_height="wrap_content"-->
+    <!--        android:text="@string/go"-->
+    <!--        android:textSize="12sp"-->
+    <!--        android:paddingHorizontal="16dp"-->
+    <!--        android:backgroundTint="@color/blue"-->
+    <!--        android:textColor="@android:color/white" />-->
+
+    <!--</LinearLayout>-->
