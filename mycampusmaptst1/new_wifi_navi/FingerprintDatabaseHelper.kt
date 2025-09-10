@@ -15,7 +15,7 @@ class FingerprintDatabaseHelper(
     DB_VERSION)
 {
     companion object {
-        private const val  DB_NAME = "MyDatabase18.db"
+        private const val  DB_NAME = "MyDatabase24.db"
         private const val DB_VERSION = 1
 
         const val TABLE_FINGERPRINTS = "fingerprints"
