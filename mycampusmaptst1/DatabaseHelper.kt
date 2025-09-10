@@ -10,7 +10,7 @@ import java.io.IOException
 
 class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DB_NAME, null, DB_VERSION){
     companion object {
-        private const val DB_NAME = "MyDatabase18.db"
+        private const val DB_NAME = "MyDatabase24.db"
         private const val DB_VERSION = 1
         const val TABLE_NAME = "allCampusLocationsTable"
         const val COLUMN_BUILDING_ID = "building_id"

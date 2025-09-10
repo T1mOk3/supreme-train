@@ -4,14 +4,13 @@ import android.content.Context
 import android.util.Log
 import org.osmdroid.util.GeoPoint
 import kotlin.math.abs
-import kotlin.math.ceil
 import kotlin.math.sqrt
 
 class OccupancyGridManager(context: Context) {
 
     private val fingerprintDatabaseHelper = FingerprintDatabaseHelper(context)
     private var gridCells: List<GridCell> = emptyList()
-    private val rssThreshold = 5.0 // 5 dB threshold as in paper
+    private val rssThreshold = 5.0 // 5 dB threshold
 
     data class GridCell(
         val cellId: String,
@@ -46,17 +45,10 @@ class OccupancyGridManager(context: Context) {
         val resolution = 2.0
 
         fingerprints.forEach { fingerprint ->
-            // Convert fingerprint location to metric coordinates
-
-            Log.d(
-                "GridManager:",
-                "${fingerprint.pointId}: ${fingerprint.latitude}, ${fingerprint.longitude}"
-            )
-
-            val centerEasting = fingerprint.longitude * 111320.0
-            val centerNorthing = fingerprint.latitude * 111111.0
-
-            // Create a 3x3 grid around each fingerprint point (as in paper)
+            // From geo to metric
+            val centerEasting = fingerprint.longitude * 111320.0 // lat radius
+            val centerNorthing = fingerprint.latitude * 111111.0 // lon radius
+            // Create a 3x3 grid around each fingerprint point
             for (i in -1..1) {
                 for (j in -1..1) {
                     val easting = centerEasting + (i * resolution)
@@ -84,55 +76,6 @@ class OccupancyGridManager(context: Context) {
         return cells.distinctBy { "${it.easting}_${it.northing}" } // Remove duplicates
     }
 
-    private fun createGridCellsOld(fingerprints: List<EachWifiFingerprint>): List<GridCell> {
-        val cells = mutableListOf<GridCell>()
-        val resolution = 2.0
-        if (fingerprints.isEmpty()) return cells
-
-        // Find the bounding area of all fingerprints
-        val minLat = fingerprints.minOf { it.latitude }
-        val maxLat = fingerprints.maxOf { it.latitude }
-        val minLon = fingerprints.minOf { it.longitude }
-        val maxLon = fingerprints.maxOf { it.longitude }
-
-        // Convert to approximate metric coordinates
-        val minEasting = minLon * 111320.0
-        val maxEasting = maxLon * 111320.0
-        val minNorthing = minLat * 111111.0
-        val maxNorthing = maxLat * 111111.0
-
-        // Calculate grid dimensions based on resolution
-        val eastingSpan = maxEasting - minEasting
-        val northingSpan = maxNorthing - minNorthing
-
-        val cellsEast = ceil(eastingSpan / resolution).toInt()
-        val cellsNorth = ceil(northingSpan / resolution).toInt()
-
-        Log.d(
-            "OccupancyGrid",
-            "Creating grid: ${cellsEast}x$cellsNorth cells ($resolution m resolution)"
-        )
-
-        // Create the grid cells
-        for (i in 0 until cellsEast) {
-            for (j in 0 until cellsNorth) {
-                val easting = minEasting + (i * resolution)
-                val northing = minNorthing + (j * resolution)
-
-                cells.add(
-                    GridCell(
-                        cellId = "cell_${i}_${j}",
-                        easting = easting,
-                        northing = northing,
-                        probability = 0.0
-                    )
-                )
-            }
-        }
-
-        return cells
-    }
-
     fun resetProbabilities() {
         val totalCells = gridCells.size
         if (totalCells > 0) {
@@ -148,15 +91,12 @@ class OccupancyGridManager(context: Context) {
             Log.w("OccupancyGrid", "Grid not initialized")
             return null
         }
-
         resetProbabilities()
         val fingerprints = fingerprintDatabaseHelper.getAllFingerprints()
-
         // Update probabilities for each access point
         liveScanMap.forEach { (bssid, liveRss) ->
             updateProbabilitiesForAP(bssid, liveRss.toDouble(), fingerprints)
         }
-
         // Find most probable position
         return findMostProbablePosition()
     }
@@ -170,14 +110,11 @@ class OccupancyGridManager(context: Context) {
             // Find closest fingerprint to this grid cell
             val closestFp = findClosestFingerprintToCell(cell, fingerprints)
             val fingerprintRss = closestFp?.accessPoints?.get(bssid)?.toDouble()
-
             // Calculate probability factor (0.4 or 0.6 as in paper)
             val factor = calculateProbabilityFactor(liveRss, fingerprintRss)
-
             // Update cell probability
             cell.probability *= factor
         }
-
         // Normalize probabilities
         normalizeProbabilities()
     }
@@ -186,7 +123,6 @@ class OccupancyGridManager(context: Context) {
         if (liveRss == null || fingerprintRss == null) {
             return 0.4 // No match found - reduce probability
         }
-
         val rssDifference = abs(liveRss - fingerprintRss)
         return if (rssDifference <= rssThreshold) {
             0.6 // Good match - increase probability
@@ -206,15 +142,13 @@ class OccupancyGridManager(context: Context) {
 
     private fun findMostProbablePosition(): PositioningResult? {
         val maxCell = gridCells.maxByOrNull { it.probability } ?: return null
-
         // Convert metric coordinates back to geographic
         val latitude = maxCell.northing / 111111.0
         val longitude = maxCell.easting / 111320.0
-
         // Calculate confidence based on probability distribution
         val confidence = calculateConfidence()
         val estimatedError = calculateEstimatedError(confidence)
-
+        //
         return PositioningResult(
             position = GeoPoint(latitude, longitude),
             confidence = confidence,

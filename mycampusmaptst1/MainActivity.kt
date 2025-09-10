@@ -92,11 +92,6 @@ class MainActivity : AppCompatActivity() {
         replaceFragment(MapFragment())
     }
 
-    fun showInstructions()
-    {
-
-    }
-
     private fun showCustomInstructions() {
         val dialogView = layoutInflater.inflate(R.layout.dialog_instructions, null)
 

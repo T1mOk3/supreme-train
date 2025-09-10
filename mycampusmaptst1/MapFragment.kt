@@ -1,4 +1,5 @@
     package io.github.mycampusmaptst1
+
     import android.Manifest
     import android.app.AlertDialog
     import android.content.Context
@@ -32,13 +33,9 @@
     import io.github.mycampusmaptst1.overlays.RouteOverlay
     import io.github.mycampusmaptst1.overlays.SharedViewModel
     import io.github.mycampusmaptst1.utils.Bounds
+    import io.github.mycampusmaptst1.utils.GeoUtils
     import io.github.mycampusmaptst1.utils.PermissionHelper
     import org.osmdroid.config.Configuration
-    import org.osmdroid.tileprovider.MapTileProviderBasic
-    import org.osmdroid.tileprovider.modules.ArchiveFileFactory
-    import org.osmdroid.tileprovider.modules.IFilesystemCache
-    import org.osmdroid.tileprovider.tilesource.TileSourceFactory
-    import org.osmdroid.tileprovider.tilesource.XYTileSource
     import org.osmdroid.util.BoundingBox
     import org.osmdroid.util.GeoPoint
     import org.osmdroid.views.MapView
@@ -51,37 +48,36 @@
     import java.io.File
     import java.io.FileOutputStream
     import java.util.Locale
-    import kotlin.math.abs
-    import kotlin.math.atan2
     import kotlin.math.cos
     import kotlin.math.pow
-    import kotlin.math.sin
     import kotlin.math.sqrt
-    import org.osmdroid.views.overlay.gestures.RotationGestureOverlay
-
 
     class MapFragment : Fragment(R.layout.map_fragment) {
         private var lastToastTime = 0L
         companion object {
             private const val TOAST_COOLDOWN = 2000
             private val CAMPUS_CENTER = GeoPoint(22.681323996194592, 114.20004844665527)
-            private const val MAX_ZOOM_LVL = 20.0
-            private const val MIN_ZOOM_LVL = 14.0
+            private const val MAX_ZOOM_LVL = 18.5
+//            private const val MAX_ZOOM_LVL = 22.0
+            private const val MIN_ZOOM_LVL = 17.5
             private val WIFI_PERMISSIONS = arrayOf(
                 Manifest.permission.ACCESS_FINE_LOCATION,
                 Manifest.permission.ACCESS_COARSE_LOCATION,
                 Manifest.permission.ACCESS_WIFI_STATE,
                 Manifest.permission.CHANGE_WIFI_STATE
             )
-
+            private val CAMPUS_BOUNDING_BOX = BoundingBox(
+                22.686324,
+                114.205048,
+                22.676324,
+                114.196048
+            )
         }
-
-
         //  map components
         private lateinit var mapView: MapView
         // gps nav
-    //    private lateinit var locationProvider: LocationProvider
-    //    private lateinit var navigationController: NavigationController
+        // private lateinit var locationProvider: LocationProvider
+        // private lateinit var navigationController: NavigationController
         private lateinit var routeOverlay: RouteOverlay
         private lateinit var destinationMarker: DestinationMarker
         // location tracking
@@ -178,7 +174,7 @@
                 setCenter(boundingBox.centerWithDateLine)
             }
 
-            val bearing = calculateBearing(startPoint, destination)
+            val bearing = GeoUtils.calculateBearing(startPoint, destination)
             mapView.mapOrientation = -bearing
             mapView.controller.setCenter(startPoint)
             mapView.controller.setZoom(18.0)
@@ -290,42 +286,13 @@
             }
         }
 
-        fun calculateBearing(start: GeoPoint, end: GeoPoint): Float {
-            val lat1 = Math.toRadians(start.latitude)
-            val lon1 = Math.toRadians(start.longitude)
-            val lat2 = Math.toRadians(end.latitude)
-            val lon2 = Math.toRadians(end.longitude)
-
-            val dLon = lon2 - lon1
-            val y = sin(dLon) * cos(lat2)
-            val x = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(dLon)
-            var bearing = Math.toDegrees(atan2(y, x))
-            bearing = (bearing + 360) % 360
-            return bearing.toFloat()
-        }
-
-
         @RequiresApi(Build.VERSION_CODES.R  )
         private fun setupFabListeners(view: View) {
             // to draw route
             view.findViewById<FloatingActionButton>(R.id.fabDrawRoute).setOnClickListener {
                 selectedDestination?.let { dest ->
                     drawRouteToDestination(dest)
-    //                // Get the current user position from the marker, not from ViewModel
-    //                val startPoint = userMarker?.position ?: run {
-    //                    // Fallback to ViewModel if marker doesn't exist
-    //                    sharedViewModel.wifiPosition.value ?: sharedViewModel.userPos.value ?: CAMPUS_CENTER
-    //                }
-    //                val route = listOf(startPoint, dest)
-    //                routeOverlay.drawRoute(route)
-    //
-    //                val bearing = calculateBearing(startPoint, dest)
-    //                mapView.mapOrientation = -bearing
-    //                mapView.controller.setCenter(startPoint)
-    //                mapView.controller.setZoom(18.0)
-
                 } ?: run { showToast("Please select a destination first") }
-
             }
             // to clear route
             view.findViewById<FloatingActionButton>(R.id.fabClear).setOnClickListener {
@@ -369,38 +336,18 @@
     //        }
         }
 
-        private fun collectAdvancedFingerprint() {
-            val pointId = "FP_${System.currentTimeMillis()}"
-            val buildingId = 1
-            val location = sharedViewModel.userPos.value ?: return
-            val success = advancedPositioningManager.collectFingerprint(pointId, buildingId, location)
-            if (success) {
-                showToast("Advanced fingerprint collected successfully!")
-                Log.d("MapFragment", "Saved fingerprint at: $location")
-            } else {
-                showToast("Failed to collect advanced fingerprint")
-            }
-        }
-
-        fun copyOfflineMapZipFromAssets(context: Context, assetFileName: String): File {
-            val destFile = File(context.filesDir, assetFileName)
-            if (!destFile.exists()) {
-                context.assets.open(assetFileName).use { input ->
-                    FileOutputStream(destFile).use { output ->
-                        input.copyTo(output)
-                    }
-                }
-            }
-            return destFile
-        }
-
-        fun ensureOfflineZipInOsmdroidDir(context: Context, zipFile: File): File {
-            val osmdroidDir = File(context.getExternalFilesDir(null), "osmdroid")
-            if (!osmdroidDir.exists()) osmdroidDir.mkdirs()
-            val destZipFile = File(osmdroidDir, zipFile.name)
-            if (!destZipFile.exists()) zipFile.copyTo(destZipFile)
-            return destZipFile
-        }
+//        private fun collectAdvancedFingerprint() {
+//            val pointId = "FP_${System.currentTimeMillis()}"
+//            val buildingId = 1
+//            val location = sharedViewModel.userPos.value ?: return
+//            val success = advancedPositioningManager.collectFingerprint(pointId, buildingId, location)
+//            if (success) {
+//                showToast("Advanced fingerprint collected successfully!")
+//                Log.d("MapFragment", "Saved fingerprint at: $location")
+//            } else {
+//                showToast("Failed to collect advanced fingerprint")
+//            }
+//        }
 
         private fun setupMapComponents(view: View) {
     //      init map components
@@ -411,30 +358,60 @@
             val zoomLevel = 18.0
             val animationDuration = 1500L
 
-            val assetFileName = "campus_map.zip"
-            val zipFile = copyOfflineMapZipFromAssets(requireContext(), assetFileName)
-            val osmdroidZip = ensureOfflineZipInOsmdroidDir(requireContext(), zipFile)
+            val assetFileName = "campus_map_1.mbtiles"
+            val mbtilesFile = File(requireContext().filesDir, assetFileName)
+            if (!mbtilesFile.exists()) {
+                requireContext().assets.open(assetFileName).use { input ->
+                    FileOutputStream(mbtilesFile).use { output ->
+                        input.copyTo(output)
+                    }
+                }
+                Log.d("MapFragment", "MBTiles file copied to: ${mbtilesFile.absolutePath}")
+            }
+
+            try {
+                val tileProvider = org.osmdroid.tileprovider.modules.OfflineTileProvider(
+                    org.osmdroid.tileprovider.util.SimpleRegisterReceiver(requireContext()),
+                    arrayOf(mbtilesFile)
+                )
+
+                mapView.setTileProvider(tileProvider)
+
+                val archives = tileProvider.archives
+                if (archives.isNotEmpty()) {
+                    val tileSources = archives[0].tileSources
+                    if (tileSources.isNotEmpty()) {
+                        val sourceName = tileSources.iterator().next()
+                        mapView.setTileSource(org.osmdroid.tileprovider.tilesource.FileBasedTileSource.getSource(sourceName))
+                        Log.d("MapFragment", "Using tile source: $sourceName")
+                    } else {
+                        mapView.setTileSource(org.osmdroid.tileprovider.tilesource.TileSourceFactory.DEFAULT_TILE_SOURCE)
+                    }
+                } else {
+                    mapView.setTileSource(org.osmdroid.tileprovider.tilesource.TileSourceFactory.DEFAULT_TILE_SOURCE)
+                }
+
+//                mapView.useDataConnection = false
+//                org.osmdroid.config.Configuration.getInstance().isMapTileDownloaderEnabled = false
+
+                Log.d("MapFragment", "Offline tile provider setup successfully")
+
+            } catch (e: Exception) {
+                Log.e("MapFragment", "Error setting up offline tile provider: ${e.message}")
+                showToast("Error setting up offline map")
+                return
+            }
 
 
-            Configuration.getInstance().osmdroidBasePath = osmdroidZip.parentFile
-            Configuration.getInstance().osmdroidTileCache = osmdroidZip.parentFile
-
-            val tileSource = XYTileSource(
-                "OSMPublicTransport",
-                14, 20, 256, ".png", arrayOf()
-            )
-
-    //        mapView.setMultiTouchControls(true)
-    //
+            //
     //        val rotationGestureOverlay = RotationGestureOverlay(mapView)
     //        rotationGestureOverlay.isEnabled = true
     //        mapView.overlays.add(rotationGestureOverlay)
 
-    //        mapView.setTileSource(tileSource)
-
             mapView.apply { // OpenTopo TileSourceFactory.MAPNIK
-                setTileSource(TileSourceFactory.MAPNIK)
+//                setTileSource(tileProvider)
                 overlays.clear()
+                setScrollableAreaLimitDouble(CAMPUS_BOUNDING_BOX)
                 minZoomLevel = MIN_ZOOM_LVL
                 maxZoomLevel = MAX_ZOOM_LVL
                 setMultiTouchControls(true)
@@ -447,7 +424,7 @@
             myLocationOverlay = MyLocationNewOverlay(
                 object : GpsMyLocationProvider(requireContext()) {
                     override fun startLocationProvider(myLocationConsumer: IMyLocationConsumer?): Boolean {
-                        // Don't start GPS provider TODO: Need to set it to false
+                        // Don't start GPS provider
                         return false
                     }
                 },
@@ -541,7 +518,7 @@
                     setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
                     relatedObject = location
                 }
-                locationMarkers.add(marker)
+                if (location.type != "Classroom") locationMarkers.add(marker)
             }
     //      add markers
             locationMarkers.forEach { marker ->
@@ -597,11 +574,16 @@
         }
         private fun getIconForLocationType(type: String?): Drawable? {
             return when (type?.lowercase(Locale.ROOT)) {
-                "study" -> getFixedSizeIcon(R.drawable.outline_study_marker)
+                "study" -> getFixedSizeIcon(R.drawable.outline_teach_building_marker)
                 "restaurant" -> getFixedSizeIcon(R.drawable.outline_restaurant_marker)
                 "office" -> getFixedSizeIcon(R.drawable.outline_office_marker)
                 "library" -> getFixedSizeIcon(R.drawable.outline_library_marker)
-                "classroom" -> getFixedSizeIcon(R.drawable.outline_room_tst_marker)
+                "laboratory" -> getFixedSizeIcon(R.drawable.outline_laboratory_marker)
+                "bank" -> getFixedSizeIcon(R.drawable.outline_bank_marker)
+                "med" -> getFixedSizeIcon(R.drawable.outline_med_marker)
+                "cafe" -> getFixedSizeIcon(R.drawable.outline_cafe_marker)
+                "event" -> getFixedSizeIcon(R.drawable.outline_assembly_hall_marker)
+                "shop" -> getFixedSizeIcon(R.drawable.outline_shop_marker)
                 else -> {
                     getFixedSizeIcon(R.drawable.outline_dest_marker)
                 }
@@ -642,96 +624,96 @@
             myLocationOverlay.disableMyLocation()
         }
 
-        fun drawBuildingGrid(buildingPolygon: List<GeoPoint>) {
-            // Clear existing grid markers
-            clearGridMarkers()
+//        fun drawBuildingGrid(buildingPolygon: List<GeoPoint>) {
+//            // Clear existing grid markers
+//            clearGridMarkers()
+//
+//            // Generate grid points for this specific building
+//            val gridPoints = bounds?.generateBuildingGrid(buildingPolygon, 10) // 10m spacing
+//
+//            // Draw the grid points
+//            gridPoints?.forEachIndexed { index, point ->
+//                val marker = Marker(mapView).apply {
+//                    position = point
+//                    title = "Building Point ${index + 1}"
+//                    snippet = "GeoPoint: ${point.latitude}, ${point.longitude})"
+////                    icon = getFixedSizeIcon(R.drawable.outline_grid_marker)
+//                    setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+//                }
+//                mapView.overlays.add(marker)
+//                gridMarkers.add(marker) // Keep track of grid markers
+//            }
+//
+//            // Also draw the building outline for reference
+//            drawBuildingOutline(buildingPolygon)
+//
+//            mapView.invalidate()
+//        }
+//        fun drawBuildingOutline(polygon: List<GeoPoint>) {
+//            val polyline = Polyline(mapView).apply {
+//                setPoints(ArrayList(polygon))
+//                color = Color.BLUE
+//                width = 3.0f
+//            }
+//            mapView.overlays.add(polyline)
+//            buildingOutlines.add(polyline) // Keep track of outlines
+//        }
+//        fun clearGridMarkers() {
+//            mapView.overlays.removeAll(gridMarkers)
+//            mapView.overlays.removeAll(buildingOutlines)
+//            gridMarkers.clear()
+//            buildingOutlines.clear()
+//        }
 
-            // Generate grid points for this specific building
-            val gridPoints = bounds?.generateBuildingGrid(buildingPolygon, 10) // 10m spacing
-
-            // Draw the grid points
-            gridPoints?.forEachIndexed { index, point ->
-                val marker = Marker(mapView).apply {
-                    position = point
-                    title = "Building Point ${index + 1}"
-                    snippet = "GeoPoint: ${point.latitude}, ${point.longitude})"
-                    icon = getFixedSizeIcon(R.drawable.outline_grid_marker)
-                    setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-                }
-                mapView.overlays.add(marker)
-                gridMarkers.add(marker) // Keep track of grid markers
-            }
-
-            // Also draw the building outline for reference
-            drawBuildingOutline(buildingPolygon)
-
-            mapView.invalidate()
-        }
-        fun drawBuildingOutline(polygon: List<GeoPoint>) {
-            val polyline = Polyline(mapView).apply {
-                setPoints(ArrayList(polygon))
-                color = Color.BLUE
-                width = 3.0f
-            }
-            mapView.overlays.add(polyline)
-            buildingOutlines.add(polyline) // Keep track of outlines
-        }
-        fun clearGridMarkers() {
-            mapView.overlays.removeAll(gridMarkers)
-            mapView.overlays.removeAll(buildingOutlines)
-            gridMarkers.clear()
-            buildingOutlines.clear()
-        }
-
-        private fun drawGrid(spacingMeters: Int, gridSize: Int) {
-
-            val gridPoints = generateGridPoints(
-                CAMPUS_CENTER.latitude,
-                CAMPUS_CENTER.longitude,
-                spacingMeters,
-                gridSize
-            )
-
-            gridPoints.forEachIndexed { index, point ->
-                val marker = Marker(mapView).apply {
-                    position = point
-                    title = "Point ${index + 1}"
-                    snippet = "GeoPoint: ${point.latitude}, ${point.longitude})"
-                    icon = getFixedSizeIcon(R.drawable.outline_grid_marker)
-                    setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-                }
-                mapView.overlays.add(marker)
-    //            Log.d("Grid", "Point ${index + 1}: (${point.latitude}, ${point.longitude})")
-            }
-            mapView.invalidate()
-        }
-        private fun generateGridPoints(centerLat: Double, centerLon: Double, spacingMeters: Int, gridSize: Int): List<GeoPoint> {
-            val points = mutableListOf<GeoPoint>()
-            val halfRange = (gridSize - 1) / 2 * spacingMeters
-
-            for (i in -halfRange..halfRange step spacingMeters) {
-                for (j in -halfRange..halfRange step spacingMeters) {
-                    val latOffset = metersToLatitudeOffset(i.toDouble())
-                    val lonOffset = metersToLongitudeOffset(j.toDouble(), centerLat)
-
-                    val pointLat = centerLat + latOffset
-                    val pointLon = centerLon + lonOffset
-
-                    points.add(GeoPoint(pointLat, pointLon))
-                }
-            }
-
-            return points
-        }
-        private fun metersToLatitudeOffset(meters: Double): Double {
-            val METERS_PER_DEGREE_LAT = 111111.0
-            return meters / METERS_PER_DEGREE_LAT
-        }
-        private fun metersToLongitudeOffset(meters: Double, latitude: Double): Double {
-            val METERS_PER_DEGREE_LAT = 111111.0
-            val cosLat = cos(Math.toRadians(latitude))
-            return meters / (METERS_PER_DEGREE_LAT * cosLat)
-        }
+//        private fun drawGrid(spacingMeters: Int, gridSize: Int) {
+//
+//            val gridPoints = generateGridPoints(
+//                CAMPUS_CENTER.latitude,
+//                CAMPUS_CENTER.longitude,
+//                spacingMeters,
+//                gridSize
+//            )
+//
+//            gridPoints.forEachIndexed { index, point ->
+//                val marker = Marker(mapView).apply {
+//                    position = point
+//                    title = "Point ${index + 1}"
+//                    snippet = "GeoPoint: ${point.latitude}, ${point.longitude})"
+//                    icon = getFixedSizeIcon(R.drawable.outline_grid_marker)
+//                    setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+//                }
+//                mapView.overlays.add(marker)
+//    //            Log.d("Grid", "Point ${index + 1}: (${point.latitude}, ${point.longitude})")
+//            }
+//            mapView.invalidate()
+//        }
+//        private fun generateGridPoints(centerLat: Double, centerLon: Double, spacingMeters: Int, gridSize: Int): List<GeoPoint> {
+//            val points = mutableListOf<GeoPoint>()
+//            val halfRange = (gridSize - 1) / 2 * spacingMeters
+//
+//            for (i in -halfRange..halfRange step spacingMeters) {
+//                for (j in -halfRange..halfRange step spacingMeters) {
+//                    val latOffset = metersToLatitudeOffset(i.toDouble())
+//                    val lonOffset = metersToLongitudeOffset(j.toDouble(), centerLat)
+//
+//                    val pointLat = centerLat + latOffset
+//                    val pointLon = centerLon + lonOffset
+//
+//                    points.add(GeoPoint(pointLat, pointLon))
+//                }
+//            }
+//
+//            return points
+//        }
+//        private fun metersToLatitudeOffset(meters: Double): Double {
+//            val METERS_PER_DEGREE_LAT = 111111.0
+//            return meters / METERS_PER_DEGREE_LAT
+//        }
+//        private fun metersToLongitudeOffset(meters: Double, latitude: Double): Double {
+//            val METERS_PER_DEGREE_LAT = 111111.0
+//            val cosLat = cos(Math.toRadians(latitude))
+//            return meters / (METERS_PER_DEGREE_LAT * cosLat)
+//        }
 
 
     }

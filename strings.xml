@@ -1,0 +1,38 @@
+<resources>
+    <string name="app_name">My Campus Map</string>
+    <string name="map_fragment">Map</string>
+    <string name="loc_fragment">Locations</string>
+    <string name="most_visited_fragment">Most visited</string>
+    <string name="me_fragment">Me</string>
+
+    <string name="button_go_to_map">Map</string>
+    <string name="button_go_to_locations">Locations</string>
+    <string name="button_go_to_most_visited">Most visited</string>
+    <string name="button_go_to_me">Me</string>
+
+    <string name="button_search">Search</string>
+
+    <string name="imageDesc">Image description</string>
+    <string name="draw_route">Draw route</string>
+    <string name="delete_route">Delete route</string>
+    <string name="go">Go</string>
+    <string name="stop_navigation">Stop Navigation</string>
+    <string name="start_navigation">Start Navigation</string>
+    <string name="map_image_description">map_test\n</string>
+    <string name="start_journey_recording">Start journey recording</string>
+    <string name="stop_journey_recording">Stop journey recording</string>
+    <string name="collect_wifi_fingerprint">Collect WiFi fingerprint</string>
+    <string name="switch_wifi_positioning_mode">Switch WiFi positioning mode</string>
+    <string name="dialog_app_usage_text">How to Use Our App</string>
+    <string name="dialog_start_wifi_navi_text">Start navigation via Wi-Fi</string>
+    <string name="dialog_draw_route_text">Draw a custom route</string>
+    <string name="dialog_delete_route_text">Delete a custom route</string>
+    <string name="dialog_buttons_functionality">Buttons functionality</string>
+    <string name="dialog_wifi_navi_header">How to use Wi-Fi navigation</string>
+    <string name="dialog_wifi_navi_info">👇 Tap the navigation button first\n🏢 Then open the Locations section\n👀 Find your destination via search\n👉 Hit the «Go» button\n🗺 Route will appear on the map\n😊 Enjoy your journey!</string>
+<!--    <string name="dialog_wifi_navi_info">🎯&#8195; Start by tapping the navigation button\n🏢&#8195; Then open the Locations section\n🔍&#8195; Find your destination via search or map\n🚀&#8195; Hit the "Go" button\n🗺️&#8195; Your route will appear on the map\n✨&#8195; Have a great trip!</string>-->
+    <string name="app_info_txt">Show app usage information</string>
+    <string name="tap_button_to_see_how_to_use_app_again">View app usage guide</string>
+
+
+</resources>
